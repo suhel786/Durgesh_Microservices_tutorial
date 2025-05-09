@@ -1,0 +1,92 @@
+1. Service Discovery Server (Eureka Server)
+===========================================
+
+Project Name: ServiceRegistryEurekaServer
+------------------------------------------
+Description: Acts as the Eureka Server for service registration and discovery.
+
+Dependencies to include:
+1. Spring Cloud Bootstrap
+2. Eureka Server
+
+@SpringBootApplication
+@EnableEurekaServer
+public class ServiceRegistryEurekaServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ServiceRegistryEurekaServerApplication.class, args);
+	}
+
+}
+
+Create 'application.yml' under /ServiceRegistryEurekaServer/src/main/resources:
+
+server:
+  port: 8761
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+Note:
+- ServiceRegistryEurekaServer is a Eureka Server.
+- Access the Eureka Dashboard at: http://localhost:8761/
+- Default Eureka port: 8761.
+- It shows the status (UP/DOWN) of all registered microservices.
+
+
+2. Eureka Discovery Client Configuration for Microservices
+===========================================================
+
+Applies to the following services:
+- UserService
+- HotelService
+- RatingService
+
+Dependencies to include in each service:
+1. Eureka Discovery Client
+
+Configuration to add in each service's 'application.yml' file:
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+Note:
+- This configuration enables all microservices to register themselves with the Eureka Server.
+- After successful registration, each service instance appears on the Eureka Dashboard.
+
+
+RestTemplate Configuration for Inter-Service Communication in UserService
+================================================================================
+
+In UserService, we need to call other microservices (like HOTEL-SERVICE or RATING-SERVICE)
+by their service names registered with Eureka. To do this, we use RestTemplate annotated 
+with @LoadBalanced.
+
+This allows the service to resolve names via Eureka instead of hardcoded URLs.
+
+Place the following code in the main application class or a configuration class in UserService:
+
+--------------------------------------------------------------------------------
+
+@Bean
+// @LoadBalanced Allows RestTemplate to call services by name from Eureka
+@LoadBalanced // RestTemplate, when annotated with @LoadBalanced, uses service names
+              // registered in Eureka instead of hardcoded hostnames and ports.
+public RestTemplate restTemplate() {
+    return new RestTemplate();
+}
+
+--------------------------------------------------------------------------------
+
+This enables UserService to communicate with HotelService and RatingService through
+service discovery.

@@ -1,0 +1,217 @@
+Creating 3 Services with Different Database Connections
+========================================================
+
+1. UserService (Spring Boot Microservice)
+-----------------------------------------
+
+Step 1: Create a Spring Starter Project for UserService
+---------------------------------------------------------
+Dependencies to include:
+1. Spring Web
+2. Spring Data JPA
+3. MySQL Connector
+4. Lombok
+
+Step 2: Create an 'application.yml' file under /UserService/src/main/resources
+--------------------------------------------------------------------------------
+Configuration:
+
+server:
+  port: 9081
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/microservices
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  application:
+    name: USER-SERVICE
+
+Step 3: UserService Project Structure
+--------------------------------------
+
+1. com.example.demo
+   - UserServiceApplication.java
+     → Main Spring Boot application class
+
+2. com.example.demo.controller
+   - UserController.java
+     → Handles HTTP requests related to users
+
+3. com.example.demo.entities
+   - User.java
+     → Represents the User entity
+   - Hotel.java
+     → Represents the Hotel entity
+   - Rating.java
+     → Represents the Rating entity
+
+4. com.example.demo.exceptions
+   - GlobalExceptionHandler.java
+     → Handles exceptions globally for all controllers
+   - ResourceNotFoundException.java
+     → Custom exception used when a resource is not found
+
+5. com.example.demo.external.services
+   - HotelService.java
+     → Interface to communicate with the external Hotel microservice
+
+6. com.example.demo.payload
+   - ApiResponse.java
+     → Standard response structure used in APIs
+
+7. com.example.demo.repositories
+   - UserRepository.java
+     → JPA repository for performing CRUD operations on User entity
+
+8. com.example.demo.services
+   - UserService.java
+     → Service interface defining user-related operations
+
+9. com.example.demo.services.impl
+   - UserServiceImpl.java
+     → Implementation of the UserService interface containing business logic
+
+2. HotelService (Spring Boot Microservice)
+
+Step 1: Create Spring Starter Project for HotelService:
+-------------------------------------------------
+Dependencies:
+1. Spring Data JPA
+2. Spring Web
+3. PostgreSQL
+4. Lombok
+
+Step 2: Create an 'application.yml' file under /HotelService/src/main/resources:
+-----------------------------------------------------------------------
+server:
+  port: 9082
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/microservices
+    username: postgres
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  application:
+    name: HOTEL-SERVICE
+
+Step 3: HotelService Project Structure (Spring Boot Microservice)
+---------------------------------------------------------
+
+1. com.example.demo
+   - HotelServiceApplication.java --> Main Spring Boot application class
+
+2. com.example.demo.controller
+   - HotelController.java --> Handles HTTP requests related to hotel operations
+   - HotelStaff.java --> (Assumed to be) a controller class to manage hotel staff-related endpoints
+
+3. com.example.demo.entities
+   - Hotel.java --> Hotel entity representing the hotel data model
+
+4. com.example.demo.exceptions
+   - GlobalExceptionHandler.java --> Handles exceptions globally across the service
+   - ResourceNotFoundException.java --> Custom exception thrown when a requested resource is not found
+
+5. com.example.demo.repositories
+   - HotelRepository.java --> JPA repository interface for Hotel entity, used for database operations
+
+6. com.example.demo.services
+   - HotelService.java --> Interface defining hotel-related service operations
+
+7. com.example.demo.services.impl
+   - HotelServiceImpl.java --> Implements the business logic for hotel-related operations
+
+
+1. RatingService (Spring Boot Microservice)
+Step 1: Create Spring Starter Project for RatingService:
+-------------------------------------------------
+Dependencies:
+1. Spring Data JPA
+2. Spring Web
+3. MongoDB
+4. Lombok
+
+Step 2: Create an 'application.yml' file under /RatingService/src/main/resources:
+
+server:
+  port: 9083
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: microservices
+      
+  application:
+    name: RATING-SERVICE
+	
+Step 3: Project Structure:
+------------------
+
+1. com.example.demo
+   - RatingServiceApplication.java
+     → Main Spring Boot application class
+
+2. com.example.demo.controller
+   - RatingController.java
+     → Handles HTTP requests related to rating operations
+
+3. com.example.demo.entities
+   - Rating.java
+     → Represents the Rating entity
+
+4. com.example.demo.repositories
+   - RatingRepository.java
+     → JPA repository for performing CRUD operations on Rating entity
+
+5. com.example.demo.services
+   - RatingService.java
+     → Service interface defining rating-related operations
+
+6. com.example.demo.services.impl
+   - RatingServiceImpl.java
+     → Implements the business logic for rating-related operations
+
+
+RestTemplate Configuration for Inter-Service Communication in UserService
+================================================================================
+
+In UserService, we need to call other microservices (like HOTEL-SERVICE or RATING-SERVICE)
+by their service names registered with Eureka. To do this, we use RestTemplate annotated 
+with @LoadBalanced.
+
+This allows the service to resolve names via Eureka instead of hardcoded URLs.
+
+Place the following code in the main application class or a configuration class in UserService:
+
+--------------------------------------------------------------------------------
+
+@Bean
+// @LoadBalanced Allows RestTemplate to call services by name from Eureka
+@LoadBalanced // RestTemplate, when annotated with @LoadBalanced, uses service names
+              // registered in Eureka instead of hardcoded hostnames and ports.
+public RestTemplate restTemplate() {
+    return new RestTemplate();
+}
+
+--------------------------------------------------------------------------------
+
+This enables UserService to communicate with HotelService and RatingService through
+service discovery.
+

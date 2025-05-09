@@ -1,0 +1,53 @@
+ Circuit Breaker using Resilience4J
+ 
+ UserService
+ 
+ Depedency:->
+ 1.Spring Boot Actuator
+ 2.Spring AOP
+ 3.Resilience4J 
+         <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+		
+public class UserController {
+
+add 	@CircuitBreaker(name="ratingHotelBreaker",fallbackMethod = "ratingHotelFallback") on above method which is call any other service
+eg.
+@GetMapping("/{userId}")
+	@CircuitBreaker(name="ratingHotelBreaker",fallbackMethod = "ratingHotelFallback")
+	public ResponseEntity<User> getSingleUser(@PathVariable String userId) {
+		User user = userService.getUser(userId);
+		return ResponseEntity.ok(user);
+
+	}		
+	
+	creating fallback method under UserController
+	// Creating fallback method for circuit breaker
+	public ResponseEntity<User> ratingHotelFallback(String userId, Exception ex) {
+		logger.info("fallback is executed because service is down: ", ex.getMessage());
+	User user =	User.builder()
+		.email("dummy@gmail.com")
+		.name("Dummy")
+		.about("This user is created dummy because some service is down")
+		.userId("12345")
+		.build();
+		return new ResponseEntity<>(user,HttpStatus.OK);
+
+	}
+	
+UserService project 
+application.yml file under /UserService/src/main/resources
+
+:-->
+
+	

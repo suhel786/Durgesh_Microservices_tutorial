@@ -1,0 +1,162 @@
+Spring Cloud Config Server - Centralized Configuration
+
+================================================================================
+1. Create Spring Boot Starter Project: ConfigServer
+================================================================================
+
+Dependencies to include:
+1. Spring Cloud Config Server
+2. Eureka Discovery Client
+
+Explanation: 
+- A Spring Boot project called ConfigServer will serve as the centralized configuration service for all the microservices in your system. 
+- The `Spring Cloud Config Server` allows us to externalize and centralize the configuration of all services, simplifying the process of maintaining configurations for multiple services.
+- The `Eureka Discovery Client` allows the Config Server to register itself with Eureka, enabling other services to discover and communicate with it.
+
+--------------------------------------------------------------------------------
+2. Main Application Class: /ConfigServer/src/main/java/com/example/demo/ConfigServerApplication.java
+--------------------------------------------------------------------------------
+
+Add the @EnableConfigServer annotation:
+
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+
+Explanation:
+- `@SpringBootApplication` is the entry point annotation for a Spring Boot application, enabling auto-configuration, component scanning, and more.
+- `@EnableConfigServer` is a specific annotation provided by Spring Cloud that tells Spring Boot to enable the functionality of the Config Server.
+- This setup will allow the Config Server to pull configuration data from an external source (e.g., GitHub repository) and make it available to other microservices.
+
+--------------------------------------------------------------------------------
+3. Configuration File: /ConfigServer/src/main/resources/application.yml
+--------------------------------------------------------------------------------
+
+server:
+  port: 9085
+
+spring:
+  application:
+    name: CONFIG-SERVER
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/suhel786/microservice-tutorial-config
+          clone-on-start: true
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+Explanation:
+- This configuration file defines the settings for the Config Server.
+- `server.port: 9085` sets the port where the Config Server will run.
+- `spring.application.name: CONFIG-SERVER` assigns a name to the Config Server application.
+- Under `spring.cloud.config.server.git.uri`, the GitHub repository URL (e.g., https://github.com/suhel786/microservice-tutorial-config) is defined, which contains the centralized configuration files for all microservices.
+- The `eureka` configuration ensures the Config Server registers itself with the Eureka server running on `localhost:8761`.
+
+--------------------------------------------------------------------------------
+4. Create Configuration Repository on GitHub
+--------------------------------------------------------------------------------
+
+Repository Name (example): microservice-tutorial-config
+
+Create a file: application.yml
+
+This file will contain shared configuration for all services like:
+UserService, HotelService, RatingService, ApiGateway
+
+Example application.yml content for GitHub:
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+Explanation:
+- A GitHub repository is created to store the configuration files used by all the services.
+- The `application.yml` file in the repository contains common configurations (like Eureka settings) that are shared across all microservices.
+- By storing these configurations in a Git repository, we can easily update and manage them, making the system more flexible and easier to maintain.
+
+--------------------------------------------------------------------------------
+5. Configuration in All Client Services
+--------------------------------------------------------------------------------
+
+In services like:
+- UserService
+- HotelService
+- RatingService
+- ApiGateway
+
+Add the following dependency:
+- Spring Cloud Starter Config (config-client)
+
+Explanation:
+- Each microservice that needs configuration from the Config Server should include the `Spring Cloud Starter Config` dependency.
+- This allows services to fetch configuration from the centralized Config Server rather than storing it in their own `application.yml` file.
+
+--------------------------------------------------------------------------------
+6. application.yml for All Services (UserService, HotelService, etc.)
+--------------------------------------------------------------------------------
+
+spring:
+  config:
+    import:
+    - configserver:http://localhost:9085
+
+Explanation:
+- This configuration in each service tells the service to import its configuration from the Config Server running on `localhost:9085`.
+- By using the `configserver` URL, the service can dynamically pull the configuration settings from the Config Server.
+
+--------------------------------------------------------------------------------
+7. Explanation (Simplified and Easy to Understand)
+--------------------------------------------------------------------------------
+
+What is Spring Cloud Config Server?
+- The Spring Cloud Config Server is a centralized service that stores all of your microservices' configuration data in one place.
+- Instead of each service having its own configuration file, the Config Server fetches configurations from a central source (like GitHub) and serves them to all the services.
+
+How does it work?
+- You store configuration properties (e.g., database credentials, Eureka configurations, etc.) in a GitHub repository.
+- The Config Server pulls the configurations from the GitHub repository at startup or when needed and makes them available to all other services.
+- Other services (like UserService, HotelService, ApiGateway) pull their configuration from the Config Server by making requests to it. This makes it easier to manage configurations for all services in a single place.
+
+Why use Config Server?
+- It simplifies configuration management in a microservices architecture.
+- It ensures all services use the same configuration, making it easier to update and maintain.
+- If there is a change in any configuration, you only need to update the GitHub repository (or any other source you choose), and all services will automatically pick up the changes.
+
+--------------------------------------------------------------------------------
+8. Notes (Simplified and Easy to Understand)
+--------------------------------------------------------------------------------
+
+What happens in services when we use Config Server?
+- When using Config Server, you no longer store the configuration for services (like Eureka settings) directly in each service's `application.yml` file.
+- Instead, the services fetch their configuration from the Config Server.
+
+How does the configuration flow work?
+- You set up a GitHub repository where you store a file called `application.yml`. This file contains all the common settings that all microservices need.
+- For example, the `eureka.client` configuration, which tells services how to register with Eureka, would be in this `application.yml` file.
+
+Why comment/remove Eureka config from individual services?
+- Since the Config Server will provide the common Eureka configuration, you no longer need to have the same Eureka settings in each individual service's configuration file.
+- By commenting out or removing the Eureka-related settings in each service, you prevent duplication and ensure that all services use the same configuration from the central source.
+
+How does this simplify your architecture?
+- Centralized configuration management makes it easier to keep your services up-to-date.
+- If the Eureka server's URL or other settings change, you can update them once in the GitHub repository (Config Server), and all services will automatically get the updated configuration without needing any manual intervention in each service.
+
